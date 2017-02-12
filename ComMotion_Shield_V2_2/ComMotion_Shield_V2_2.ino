@@ -10,12 +10,13 @@ volatile byte IRC;                                                            //
 
 //============================================================================== Motor Control Variables ================================================================================
 
-int acount,bcount;                                                            // encoder pulse counters used to measure distance
+int acount,bcount;                                                            // encoder pulse counters used to measure distance - 1 pulse aproximately equal to 0.25mm or 1/100th of an inch
 volatile byte aflag;                                                          // flag to indicate encoder A has changed state                                                                
 volatile byte bflag;                                                          // flag to indicate encoder B has changed state
 volatile unsigned long apulse,bpulse;                                         // width of encoder pulses in uS
 volatile unsigned long atime,btime;                                           // stores time of last encoder state change
 byte motora,motorb;                                                           // values will be 0&1 on MCU1 and 2&3 on MCU2     - precalculated to increase speed
+byte apwm,bpwm;                                                               // A and B motor speeds
 long maxpulse[4];                                                             // max time between encoder state changes in uS   - precalculated to increase speed
 
 //============================================================================== Configuration Data======================================================================================
@@ -43,6 +44,9 @@ int velocity=0;                                                               //
 int angle=-360;                                                               // requested angle of travel
 int rotation=0;                                                               // requested rotation
 int mspeed[4];                                                                // requested speed of individual motors
+int encstop[4];                                                               // requested encoder count stopping distance (0 = no stop)
+int encstart[4];                                                              // start position recorded when stopping a requested distance
+byte encstopreport;                                                           // bits 0-3 indicate which motor 
 
 float radconvert=PI/180;                                                      // used to convert radians into degrees (precalculated to improve speed)
 
@@ -75,8 +79,8 @@ void setup()
   
   for(byte i=0;i<4;i++)
   {
-    maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;
-    maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;
+    maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;        // uS per minute / (RPM * encoder resolution per RPM) * 255
+    maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;                     // reduce by reserve percentage
   }
   
   DDRD=B00000011;                                                             // ensure dipswitch pins (PD4-PD7) and encoder inputs (PD2,PD3) plus RX and TX are set to input
@@ -96,7 +100,7 @@ void setup()
   Wire.begin(address);                                                        // initialize I²C library and set slave address
   Wire.onReceive(I2C_Receive);                                                // define I²C slave receiver ISR
   Wire.onRequest(I2C_Send);                                                   // define I²C slave transmit ISR
-  Wire.setTimeout(1L);                                                        // sets a timeout of 1mS for I²C.
+  Wire.setTimeout(5L);                                                        // sets a timeout of 5mS for I²C.
   
   
   if(i2cfreq==0)                                                              // thanks to Nick Gammon: http://gammon.com.au/i2c

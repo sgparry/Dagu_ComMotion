@@ -3,7 +3,6 @@ void Motors()
   //============================================================================ Motor Speed Control ====================================================================================
 
   unsigned long actual;                                                       // temporary calculation of desired speed in uS per encoder pulse
-  static byte apwm,bpwm;                                                      // A and B motor speeds
   static byte astall,bstall;                                                  // flags to indicate a stalled motor
   
 
@@ -12,7 +11,20 @@ void Motors()
     apulse=(micros()-atime);                                                  // time between last state change and this state change
     atime=micros();                                                           // update atime with time of most recent state change
         
-    if(aflag) acount=acount+(mspeed[motora]>0)-(mspeed[motora]<0);            // update encoder A state change counter
+    if(aflag)                                                                 // if encoder A has changed states
+    {
+      acount=acount+(mspeed[motora]>0)-(mspeed[motora]<0);                    // update encoder A state change counter
+      if(encstop[motora]!=0)                                                  // if "stop on encoder count" is enabled
+      {
+        if(abs(encstart[motora]-acount)>=encstop[motora])                     // check if motor has travelled the desired distance
+        {
+          mspeed[motora]=0;                                                   // set desired speed to 0
+          apwm=0;                                                             // set PWM to 0
+          encstop[motora]=0;                                                  // reset encoder stop
+          bitSet(encstopreport,motora);                                       // report to master that motor A has achieved position
+        }
+      }
+    }
     actual=maxpulse[motora]/abs(mspeed[motora]);                              // calculate desired time in uS between encoder pulses
     if(actual>apulse && apwm>0) apwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<apulse && apwm<255) apwm++;                                     // if motor is running too slow then increase PWM
@@ -28,7 +40,20 @@ void Motors()
     bpulse=(micros()-btime);                                                  // time between last state change and this state change
     btime=micros();                                                           // update btime with time of most recent state change
         
-    if(bflag) bcount=bcount+(mspeed[motorb]>0)-(mspeed[motorb]<0);            // update encoder B state change counter
+    if(bflag)                                                                 // if encoder B has changed states
+    {
+      bcount=bcount+(mspeed[motorb]>0)-(mspeed[motorb]<0);                    // update encoder B state change counter
+      if(encstop[motorb]!=0)                                                  // if "stop on encoder count" is enabled
+      {
+        if(abs(encstart[motorb]-bcount)>=encstop[motorb])                     // check if motor has travelled the desired distance
+        {
+          mspeed[motorb]=0;                                                   // set desired speed to 0
+          bpwm=0;                                                             // set PWM to 0
+          encstop[motorb]=0;                                                  // reset encoder stop
+          bitSet(encstopreport,motorb);                                       // report to master that motor B has achieved position 
+        }
+      }
+    }
     actual=maxpulse[motorb]/abs(mspeed[motorb]);                              // calculate desired time in uS between encoder pulses
     if(actual>bpulse && bpwm>0) bpwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<bpulse && bpwm<255) bpwm++;                                     // if motor is running too slow then increase PWM
@@ -85,6 +110,13 @@ void Motors()
       bpwm+=2;                                                                // jump start bpwm value
       if(bpwm>253) bpwm=253;
     }
+  }
+  if(encstopreport>0)
+  {
+    Wire.beginTransmission(master);
+    Wire.write(encstopreport);
+    encstopreport=0;
+    Wire.endTransmission();
   }
 }
 

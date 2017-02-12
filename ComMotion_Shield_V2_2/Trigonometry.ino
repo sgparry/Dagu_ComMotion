@@ -6,11 +6,15 @@ void Trigonometry()
     {
       mspeed[0]=int(sin((angle+120.0)*radconvert)*float(velocity))+rotation;                  // calculate desired speed
       mspeed[1]=int(sin((angle)*radconvert)*float(velocity))+rotation;                        // calculate desired speed
+      //apwm=abs(mspeed[0]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[1]);                                                                    // set initial pwm value
     }
     else
     {
       mspeed[2]=int(sin((angle-120.0)*radconvert)*float(velocity))+rotation;                  // calculate desired speed
       mspeed[3]=0;                                                                            // 4th motor not used
+      //apwm=abs(mspeed[2]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[3]);                                                                    // set initial pwm value
     }
     return;
   }
@@ -21,11 +25,15 @@ void Trigonometry()
     {
       mspeed[0]=int(sin((angle)*radconvert)*velocity)+rotation;                               // calculate desired speed
       mspeed[1]=int(sin((angle+90)*radconvert)*velocity)+rotation;                            // calculate desired speed
+      //apwm=abs(mspeed[0]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[1]);                                                                    // set initial pwm value
     }
     else
     {
       mspeed[2]=int(sin((angle+180)*radconvert)*velocity)+rotation;                           // calculate desired speed
       mspeed[3]=int(sin((angle+270)*radconvert)*velocity)+rotation;                           // calculate desired speed
+      //apwm=abs(mspeed[2]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[3]);                                                                    // set initial pwm value
     }
     return;
   }
@@ -36,11 +44,15 @@ void Trigonometry()
     {
       mspeed[0]=int((-sin(angle*radconvert)+cos(angle*radconvert))*float(velocity))+rotation; // calculate desired speed
       mspeed[1]=int((+sin(angle*radconvert)+cos(angle*radconvert))*float(velocity))+rotation; // calculate desired speed
+      //apwm=abs(mspeed[0]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[1]);                                                                    // set initial pwm value
     }
     else
     {
       mspeed[2]=int((-sin(angle*radconvert)+cos(angle*radconvert))*float(velocity))-rotation; // calculate desired speed
       mspeed[3]=int((+sin(angle*radconvert)+cos(angle*radconvert))*float(velocity))-rotation; // calculate desired speed
+      //apwm=abs(mspeed[2]);                                                                    // set initial pwm value
+      //bpwm=abs(mspeed[3]);                                                                    // set initial pwm value
     }
     return;
   }

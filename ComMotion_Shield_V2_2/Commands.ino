@@ -70,16 +70,9 @@ void Commands()
     return;
   }
 
-  if(command==3 && (packsize==7 || packsize==9)) //============================ Motor Control =======================================================================
+  if(command==3 && (packsize==7 || packsize==9 || packsize==17)) //============================ Motor Control =======================================================================
   {
-    if((configuration==3 || configuration==19) && packsize==9)               // Individual motor control  
-    {
-      for(byte i=0;i<4;i++)
-      {
-        mspeed[i]=datapack[i*2+1]*256+datapack[i*2+2];
-      }
-    }
-    else                                                                     // Omni or Mecanum Wheels 
+    if((configuration==3 || configuration==19) && packsize==7)               // Omni or Mecanum Wheels with or without encoder feedback
     {
       velocity=datapack[1]*256+datapack[2];
       angle=datapack[3]*256+datapack[4];
@@ -102,6 +95,30 @@ void Commands()
       
       Trigonometry();
     }
+    
+    if((configuration==3 || configuration==19) && packsize==9)               // Individual motor control with or without encoder feedback  
+    {
+      for(byte i=0;i<4;i++)
+      {
+        mspeed[i]=datapack[i*2+1]*256+datapack[i*2+2];
+      }
+      //apwm=mspeed[motora];
+      //bpwm=mspeed[motorb];
+    }
+    
+    if((configuration==3 || configuration==19) && packsize==17)             // Individual motor control with or without encoder feedback stopping after a set encoder count
+    {
+      for(byte i=0;i<4;i++)
+      {
+        mspeed[i]=datapack[i*4+1]*256+datapack[i*4+2];
+        encstop[i]=datapack[i*4+3]*256+datapack[i*4+4];
+      }
+      encstart[motora]=acount;
+      encstart[motorb]=bcount;
+      //apwm=mspeed[motora];
+      //bpwm=mspeed[motorb];
+    }
+    
     command=255;  
     return;
   }
