@@ -6,13 +6,15 @@ void Motors()
   static byte apwm,bpwm;                                                      // A and B motor speeds
   static byte astall,bstall;                                                  // flags to indicate a stalled motor
   
-
-  if(aflag==1 || astall==1)                                                   // if encoder A has changed states or motor A has stalled                  
+  slider ^= 1;                                                                // switch slots so that the isr can continue without clashing.
+  byte inc = ainc[slider];
+  if(inc>0 || astall==1)                                                   // if encoder A has changed states or motor A has stalled                  
   {
     apulse=(micros()-atime);                                                  // time between last state change and this state change
     atime=micros();                                                           // update atime with time of most recent state change
         
-    if(aflag) acount=acount+(mspeed[motora]>0)-(mspeed[motora]<0);            // update encoder A state change counter
+    if(inc > 0)
+      acount=acount + ((int)inc) * ((mspeed[motora]>0)-(mspeed[motora]<0));   // update encoder A state change counter
     actual=maxpulse[motora]/abs(mspeed[motora]);                              // calculate desired time in uS between encoder pulses
     if(actual>apulse && apwm>0) apwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<apulse && apwm<255) apwm++;                                     // if motor is running too slow then increase PWM
@@ -20,15 +22,17 @@ void Motors()
     analogWrite(pwmapin,apwm);                                                // update motor speed
     digitalWrite(dirapin,mspeed[motora]>0);                                   // set direction of motor
     astall=0;                                                                 // reset stall flag
-    aflag=0;                                                                  // reset encoder flag
+    ainc[slider]=0;                                                           // reset encoder temp count
   }
 
-  if(bflag==1 || bstall==1)                                                   // if encoder B has changed states or motor B has stalled  
+  inc = binc[slider];
+  if(inc>0 || bstall==1)                                                   // if encoder B has changed states or motor B has stalled  
   {  
     bpulse=(micros()-btime);                                                  // time between last state change and this state change
     btime=micros();                                                           // update btime with time of most recent state change
         
-    if(bflag) bcount=bcount+(mspeed[motorb]>0)-(mspeed[motorb]<0);            // update encoder B state change counter
+    if(inc > 0)
+      bcount=bcount+((int)inc) * ((mspeed[motorb]>0)-(mspeed[motorb]<0));     // update encoder B state change counter
     actual=maxpulse[motorb]/abs(mspeed[motorb]);                              // calculate desired time in uS between encoder pulses
     if(actual>bpulse && bpwm>0) bpwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<bpulse && bpwm<255) bpwm++;                                     // if motor is running too slow then increase PWM
@@ -36,7 +40,7 @@ void Motors()
     analogWrite(pwmbpin,bpwm);                                                // update motor speed
     digitalWrite(dirbpin,mspeed[motorb]>0);                                   // set direction of motor
     bstall=0;                                                                 // reset stall flag
-    bflag=0;                                                                  // reset encoder flag
+    binc[slider]=0;                                                           // reset encoder temp count
   }  
   
   
@@ -93,12 +97,12 @@ void Motors()
 
 void Aencoder()                                                               // left  encoder Interrupt Service Routine
 {
-  aflag=1;                                                                    // set flag for left  encoder
+  ainc[slider] ++;                                                                    // increment holding counter for A
 }
 
 void Bencoder()                                                               // right encoder Interrupt Service Routine
 {
-  bflag=1;                                                                    // set flag for right encoder
+  binc[slider] ++;                                                                    // increment holding counter B
 }
 
 
