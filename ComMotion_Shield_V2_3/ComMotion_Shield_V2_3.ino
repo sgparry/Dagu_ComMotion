@@ -197,7 +197,7 @@ void loop()
     analogWrite(pwmapin,abs(mspeed[mcu*2]));                                  // set motor A speed
     digitalWrite(dirapin,mspeed[mcu*2]>0);                                    // set motor A direction
     analogWrite(pwmbpin,abs(mspeed[mcu*2+1]));                                // set motor B speed
-    digitalWrite(dirapin,mspeed[mcu*2+1]>0);                                  // set motor B direction
+    digitalWrite(dirbpin,mspeed[mcu*2+1]>0);                                  // set motor B direction
   }
 }
 
