@@ -10,8 +10,9 @@ byte address;                                                                 //
 //============================================================================== Motor Control Variables ================================================================================
 
 int acount,bcount;                                                            // encoder pulse counters used to measure distance
-volatile byte aflag;                                                          // flag to indicate encoder A has changed state                                                                
-volatile byte bflag;                                                          // flag to indicate encoder B has changed state
+volatile uint8_t ainc[2];                                                     // windowed temporary counter to indicate encoder A has changed state
+volatile uint8_t binc[2];                                                     // windowed temporary counter to indicate encoder B has changed state
+volatile uint8_t slider;                                                      // indicates which window slot is currently live
 volatile unsigned long apulse,bpulse;                                         // width of encoder pulses in uS
 volatile unsigned long atime,btime;                                           // stores time of last encoder state change
 byte motora,motorb;                                                           // values will be 0&1 on MCU1 and 2&3 on MCU2     - precalculated to increase speed
