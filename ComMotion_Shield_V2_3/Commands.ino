@@ -133,18 +133,42 @@ void Commands()
 
   if(command==6 && packsize==2) //============================================= Status request ======================================================================
   {
+    // Status Command Bit Meanings
+    // ===========================
+    // Note: revised for 2.3.1
+    // Only one MCU's status is returned at a time - a command must be sent to each.
+    // Bit 0: Returns 8 bytes, the encoder count from each motor high byte first.
+    // Bit 1: Resets all encoder counters. If bit 0 is high then the counters will be read before being reset.
+    // Bit 2: Returns 8 bytes, the current draw of each motor high byte first.
+    // Bit 3: If sent to MCU1: Returns 6 bytes, the analog inputs A3, A6 and A7 from MCU1, high byte first. A7 is battery voltage*.
+    //        If sent to MCU2: Returns 1 byte MCU number **,
+    // Bit 4: If sent to MCU1: Returns 1 byte MCU number **,
+    //        If sent to MCU2: Returns 6 bytes, the analog inputs A3, A6 and A7 from MCU1, high byte first.
+    // Bit 5: Returns 1 byte, the error log for the motors.
+    // Bit 6: Clears the error logs. If bit 5 or 6 are high then those error logs will be read first.
+    // Bit 7: Used to indicate internal communication - return the data to the other MCU, rather than the host MCU.
+    //
+    // * Battery voltage = MCU1analog input A7 * 30 / 185. A result of 84 = 8.4V
+    // ** The MCU number is added as the _first_ byte: 1 = MCU1, 2 = MCU2. Can be used to easily identify which MCU originated the packet.
+
                                                                              // each mcu sends it's data seperately to minimize interferance with motor speed control
                                                                              
     byte spsize=0;                                                           // intitial send pack size = 0
     int request=datapack[1];                                                 // copy datapack to global variable "request" ASAP so datapack can be reused
+
+    if(((request&16) && mcu==0) || ((request&8) && mcu==1))                 // start the packet with the MCU number, if requested.
+    {
+      sendpack[spsize+0] = mcu + 1;
+      spsize++;
+    }
     
     if(request&1)// Bit 0:                                                   // return encoder counter values
     {
-      sendpack[0] =highByte(acount);
-      sendpack[1] = lowByte(acount);
-      sendpack[2] =highByte(bcount);
-      sendpack[3] = lowByte(bcount);
-      spsize=4;                                                              // increment pack size by 4 bytes (counts from 2 encoders only)
+      sendpack[spsize+0] =highByte(acount);
+      sendpack[spsize+1] = lowByte(acount);
+      sendpack[spsize+2] =highByte(bcount);
+      sendpack[spsize+3] = lowByte(bcount);
+      spsize+=4;                                                              // increment pack size by 4 bytes (counts from 2 encoders only)
     }
 
     if(request&2)// Bit 1:                                                   // reset encoder counters
@@ -175,7 +199,7 @@ void Commands()
 
     if(request&32)// Bit 5:                                                  // return error log
     {
-      sendpack[spsize]=eflag;
+      sendpack[spsize++]=eflag;
     }
 
     if(request&64)// Bit 6:                                                  // clear error log
@@ -184,8 +208,8 @@ void Commands()
     }
     
     byte returnaddress=master;                                               // return address is I²C master by default
-    if((request&127) && mcu==0) returnaddress=address+1;                     // bit 7 indicates internal request - return to other processor
-    if((request&127) && mcu==1) returnaddress=address-1;                     // bit 7 indicates internal request - return to other processor
+    if((request&128) && mcu==0) returnaddress=address+1;                     // bit 7 indicates internal request - return to other processor
+    if((request&128) && mcu==1) returnaddress=address-1;                     // bit 7 indicates internal request - return to other processor
     
     Wire.beginTransmission(returnaddress);
     Wire.write(sendpack,spsize);
