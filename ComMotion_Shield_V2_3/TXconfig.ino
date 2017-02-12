@@ -2,7 +2,7 @@ void TXconfig()
 {
   if(mcu)
   {
-    Serial.begin(57600);
+    //Serial.begin(57600);
     Serial.println("");
     Serial.print("Demo:");Serial.println(demo,DEC);
     Serial.print("Mode:");Serial.println(mode,DEC);

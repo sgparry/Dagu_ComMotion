@@ -1,4 +1,4 @@
-//#include <TimerOne.h>
+
 #include <EEPROM.h>
 #include <Wire.h>
 #include "IOpins.h"
@@ -6,17 +6,15 @@
 
 byte mcu;                                                                     // designation as MCU 1 or MCU 2 as determined by state of pin A2
 byte address;                                                                 // I²C address based on dipswitches and ID pin
-volatile byte IRC;                                                            // global variable used to store IR Command
 
 //============================================================================== Motor Control Variables ================================================================================
 
-int acount,bcount;                                                            // encoder pulse counters used to measure distance - 1 pulse aproximately equal to 0.25mm or 1/100th of an inch
+int acount,bcount;                                                            // encoder pulse counters used to measure distance
 volatile byte aflag;                                                          // flag to indicate encoder A has changed state                                                                
 volatile byte bflag;                                                          // flag to indicate encoder B has changed state
 volatile unsigned long apulse,bpulse;                                         // width of encoder pulses in uS
 volatile unsigned long atime,btime;                                           // stores time of last encoder state change
 byte motora,motorb;                                                           // values will be 0&1 on MCU1 and 2&3 on MCU2     - precalculated to increase speed
-byte apwm,bpwm;                                                               // A and B motor speeds
 long maxpulse[4];                                                             // max time between encoder state changes in uS   - precalculated to increase speed
 
 //============================================================================== Configuration Data======================================================================================
@@ -44,9 +42,6 @@ int velocity=0;                                                               //
 int angle=-360;                                                               // requested angle of travel
 int rotation=0;                                                               // requested rotation
 int mspeed[4];                                                                // requested speed of individual motors
-int encstop[4];                                                               // requested encoder count stopping distance (0 = no stop)
-int encstart[4];                                                              // start position recorded when stopping a requested distance
-byte encstopreport;                                                           // bits 0-3 indicate which motor 
 
 float radconvert=PI/180;                                                      // used to convert radians into degrees (precalculated to improve speed)
 
@@ -75,12 +70,12 @@ void setup()
   //============================================================================ Use Reset Button to select demo mode ===================================================================
   
   EEPROMload();                                                               // load configuration from EEPROM
-  if(defaulted!=160) EEPROMdefaults();                                        // load defaults if no previous configuration found or in demo mode
+  if(defaulted!=170) EEPROMdefaults();                                        // load defaults if no previous configuration found or in demo mode
   
   for(byte i=0;i<4;i++)
   {
-    maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;        // uS per minute / (RPM * encoder resolution per RPM) * 255
-    maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;                     // reduce by reserve percentage
+    maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;
+    maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;
   }
   
   DDRD=B00000011;                                                             // ensure dipswitch pins (PD4-PD7) and encoder inputs (PD2,PD3) plus RX and TX are set to input
@@ -93,16 +88,13 @@ void setup()
   motora=mcu*2;
   motorb=mcu*2+1;
   
-  
-  digitalWrite(18,1);                                                         // enable pullup on SDA pin
-  digitalWrite(19,1);                                                         // enable pullup on SCL pin
-    
   Wire.begin(address);                                                        // initialize I²C library and set slave address
   Wire.onReceive(I2C_Receive);                                                // define I²C slave receiver ISR
   Wire.onRequest(I2C_Send);                                                   // define I²C slave transmit ISR
-  Wire.setTimeout(5L);                                                        // sets a timeout of 5mS for I²C.
-  
-  
+  Wire.setTimeout(1L);                                                        // sets a timeout of 1mS for I²C
+  Wire.flush();
+  delay(100);                                                                 // required to ensure both processors are initialized before inter-communications begins
+    
   if(i2cfreq==0)                                                              // thanks to Nick Gammon: http://gammon.com.au/i2c
   {
     TWBR=72;                                                                  // default I²C clock is 100kHz
@@ -136,7 +128,7 @@ void setup()
   Serial.begin(long(baudrate[mcu]));                                          // initialize Serial library and set baud rate
   Serial.setTimeout(1L);                                                      // sets a timeout of 1mS for Serial. Baud below 9600 should not be used unless this value is increased
   
-  if(mcu) TXconfig();
+  //if(mcu) TXconfig();
   delay(1);
   
   while(millis()-time<1000)
@@ -150,11 +142,6 @@ void setup()
     if(demo==2) Beep(5);
   }
   
-  //Timer1.initialize(200);
-  //Timer1.attachInterrupt(IRdecode);
-  
-
-
   //============================================================================ Encoder Interrupts =====================================================================================
 
   attachInterrupt(0,Aencoder,CHANGE);                                         // call ISR for left  encoder when state changes
@@ -164,11 +151,6 @@ void setup()
 
 void loop()
 { 
-  if(mcu==1 && IRC>0) IRcommands(); 
-        
-  
-  
-    
   //---------------------------------------------------------------------------- Read analog inputs including battery voltage and motor currents ----------------------------------------
   analog++;                                                                   // select a different input each loop (analog read takes 260uS)
   if(analog>4) analog=0;                                                      // rotate through current A, current B, A3, A6 and A7

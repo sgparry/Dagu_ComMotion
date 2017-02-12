@@ -10,6 +10,10 @@ void I2C_Receive(int bytes)                                   // received comman
   
   command=datapack[0];
   packsize=bytes;
+  
+  //Serial.print("Pack size:");Serial.println(bytes,DEC);
+  //Serial.print("Command:");Serial.println(command,DEC);
+  
   if(mode==1 && command<5)
   {
     mode=0;                                                   // disable demo mode

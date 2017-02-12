@@ -5,7 +5,7 @@ void EEPROMdefaults()
   ,1,0,0,52,188,52,188,52,188,52,188
   ,3,32,3,32,3,32,3,32
   ,10,10,10,10,10,10,10,10
-  ,4,37,128,37,128,160};                                            // default configuration data
+  ,4,37,128,37,128,170};                                            // default configuration data
                   
   for(int i=0;i<41;i++)
   {
@@ -77,7 +77,7 @@ void EEPROMsave()                                                   // save conf
   EEPROM.write(38,highByte(baudrate[1]));
   EEPROM.write(39, lowByte(baudrate[1]));
   
-  EEPROM.write(40,160);
+  EEPROM.write(40,170);
 }
 
 /*
