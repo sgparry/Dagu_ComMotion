@@ -5,9 +5,10 @@ void Motors()
   unsigned long actual;                                                       // temporary calculation of desired speed in uS per encoder pulse
   static byte apwm,bpwm;                                                      // A and B motor speeds
   static byte astall,bstall;                                                  // flags to indicate a stalled motor
-  
+
+  byte oslider = slider;
   slider ^= 1;                                                                // switch slots so that the isr can continue without clashing.
-  byte inc = ainc[slider];
+  byte inc = ainc[oslider];
   if(inc>0 || astall==1)                                                   // if encoder A has changed states or motor A has stalled                  
   {
     apulse=(micros()-atime);                                                  // time between last state change and this state change
@@ -22,10 +23,10 @@ void Motors()
     analogWrite(pwmapin,apwm);                                                // update motor speed
     digitalWrite(dirapin,mspeed[motora]>0);                                   // set direction of motor
     astall=0;                                                                 // reset stall flag
-    ainc[slider]=0;                                                           // reset encoder temp count
+    ainc[oslider]=0;                                                          // reset encoder temp count
   }
 
-  inc = binc[slider];
+  inc = binc[oslider];
   if(inc>0 || bstall==1)                                                   // if encoder B has changed states or motor B has stalled  
   {  
     bpulse=(micros()-btime);                                                  // time between last state change and this state change
@@ -40,7 +41,7 @@ void Motors()
     analogWrite(pwmbpin,bpwm);                                                // update motor speed
     digitalWrite(dirbpin,mspeed[motorb]>0);                                   // set direction of motor
     bstall=0;                                                                 // reset stall flag
-    binc[slider]=0;                                                           // reset encoder temp count
+    binc[oslider]=0;                                                          // reset encoder temp count
   }  
   
   
