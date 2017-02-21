@@ -44,10 +44,10 @@ void SerialInput()
     
     if(command==255)
     {
-      Serial.println("Command not recognized!");
-      Serial.print("Command:");Serial.print(datapack[0],DEC);
-      Serial.print("Pack Size:");Serial.println(i,DEC);
-      Serial.println("");
+      Serial.println(F("Command not recognized!"));
+      Serial.print(F("Command:"));Serial.print(datapack[0],DEC);
+      Serial.print(F("Pack Size:"));Serial.println(i,DEC);
+      Serial.println();
     }
     else
     {
