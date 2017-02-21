@@ -50,10 +50,16 @@ void TXconfig()
       Serial.print(FS(STR_M));Serial.print(i);Serial.print(F(" stall time:"));Serial.print(stalltm[i]);Serial.println(F("mS"));
     }
     Serial.println();
+    for(int i=0; i<4; i++)
+    {
+      Serial.print(F("E"));Serial.print(i);Serial.print(F(" flags:"));Serial.println(encflags[i],HEX);
+    }
+    Serial.println();
     Serial.print(F("Serial mode:"));Serial.println(sermode,DEC);
     Serial.print(F("Baud rate port 1:"));Serial.println(baudrate[0]);
     Serial.print(F("Baud rate port 2:"));Serial.println(baudrate[1]);
     Serial.print(F("Defaults:"));Serial.println(EEPROM.read(40),DEC);
+    Serial.print(F("Defaults2:"));Serial.println(EEPROM.read(45),DEC);
     Serial.println();
     Serial.println();
   }

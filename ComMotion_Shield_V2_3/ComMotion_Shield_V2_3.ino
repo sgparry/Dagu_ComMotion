@@ -28,11 +28,14 @@ int maxamps[4];                                                               //
 byte master=1;                                                                // external master address (default=1)
 byte addroffset=0;                                                            // optional I²C address offset (default=0)
 byte defaulted;                                                               // used to determine if defaults need to be loaded
+byte defaulted2;                                                              // used to determine if extended defaults need to be loaded
 byte encoders;                                                                // flag to indicate if encoder feedback is enabled or disabled
 int motrpm[4];                                                                // motor rpm used to determine max speed
 int encres[4];                                                                // encoder resolution (x100) used to determine max speed
 byte reserve[4];                                                              // reserve power to ensure accurate speed under changing load
 long stalltm[4];                                                              // stall time in mS used to determine if a motor is running slow or stalled
+byte encflags[4];                                                             // encoder flags: bit 0: 0 = signed 1 = scalar distance. Whether or not reverse is treated as negative distance.
+                                                                              //                    1: 0 = edges  1 = periods.         Not yet implemented: for optical encoders with uneven 0/1 pulses.
 byte sermode;                                                                 // serial mode determines where commands come from and data goes to
 unsigned int baudrate[2];                                                     // baud rate for each serial port
 
@@ -72,6 +75,7 @@ void setup()
   
   EEPROMload();                                                               // load configuration from EEPROM
   if(defaulted!=170) EEPROMdefaults();                                        // load defaults if no previous configuration found or in demo mode
+  else if(defaulted2!=170) EEPROMdefaults2();                                 // load extended defaults if no previous configuration found or in demo mode
   
   for(byte i=0;i<4;i++)
   {

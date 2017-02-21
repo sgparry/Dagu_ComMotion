@@ -5,15 +5,25 @@ void EEPROMdefaults()
   ,1,0,0,52,188,52,188,52,188,52,188
   ,3,32,3,32,3,32,3,32
   ,10,10,10,10,10,10,10,10
-  ,4,37,128,37,128,170};                                            // default configuration data
+  ,4,37,128,37,128,170,0,0,0,0,170};                                // default configuration data
                   
-  for(int i=0;i<41;i++)
+  for(int i=0;i<46;i++)
   {
     EEPROM.write(i,defaults[i]);                                    // store defaultes in EEPROM
   }
   EEPROMload();                                                     // load configuration from EEPROM
 }
 
+void EEPROMdefaults2()
+{
+  for(int i=0;i<4;i++)
+  {
+    EEPROM.write(41+i,(byte)0);                                     // store defaults in EEPROM
+    encflags[i]=0;                                                  // encoder flags
+  }
+  EEPROM.write(45,170);
+  defaulted2 = 170;
+}
 
 void EEPROMload()                                                   // load configuration from EEPROM into program
 {
@@ -32,6 +42,7 @@ void EEPROMload()                                                   // load conf
     encres[i]=EEPROM.read(i*2+19)*256+EEPROM.read(i*2+20);          // encoder resolution (x100)
     reserve[i]=EEPROM.read(27+i);                                   // motor power reserve values
     stalltm[i]=long(EEPROM.read(31+i));                             // motor stall time in mS
+    encflags[i]=EEPROM.read(41+i);                                  // encoder flags
   }
   
   master=EEPROM.read(8);                                            // external I²C master address
@@ -43,6 +54,7 @@ void EEPROMload()                                                   // load conf
   baudrate[1]=(EEPROM.read(38)*256U+EEPROM.read(39));
   
   defaulted=EEPROM.read(40);                                        // flag to indicate defaults have been loaded
+  defaulted2=EEPROM.read(45);                                       // flag to indicate defaults have been loaded
 }
 
 
@@ -70,6 +82,7 @@ void EEPROMsave()                                                   // save conf
     EEPROM.write(i*2+20, lowByte(encres[i]));
     EEPROM.write(i+27,reserve[i]);
     EEPROM.write(i+31,byte(stalltm[i]));
+    EEPROM.write(i+41,byte(encflags[i]));
   }
   EEPROM.write(35,sermode);
   EEPROM.write(36,highByte(baudrate[0]));
@@ -78,6 +91,7 @@ void EEPROMsave()                                                   // save conf
   EEPROM.write(39, lowByte(baudrate[1]));
   
   EEPROM.write(40,170);
+  EEPROM.write(45,170);
 }
 
 /*
@@ -133,5 +147,11 @@ void EEPROMsave()                                                   // save conf
     39    Baud 2 Lo:       Port 2 baud rate low  byte
         
     40    defaults flag    170=defaults loaded (170 = B10101010)
+    41    E1 flags:        bit 0: 0 = signed 1 = scalar distance. Whether or not reverse is treated as negative distance.
+                               1: 0 = edges  1 = periods.         Not yet implemented: for optical encoders with uneven 0/1 pulses.
+    42    E2 flags
+    43    E3 flags
+    44    E4 flags
+    45    defaults flag 2  170=defaults loaded (170 = B10101010)
 */
 

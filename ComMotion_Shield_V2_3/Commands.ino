@@ -39,7 +39,7 @@ void Commands()
 
   if(command==2) //============================================================ Encoder Configuration Data Received =================================================
   {
-    if(packsize==25)                                                         // configure each encoder individually
+    if(packsize==25 || packsize==29)                                         // configure each encoder individually
     {
       for(byte i=0;i<4;i++)
       {
@@ -47,9 +47,11 @@ void Commands()
         encres[i]=datapack[i*2+9]*256+datapack[i*2+10];
         reserve[i]=datapack[17+i];
         stalltm[i]=datapack[21+i];
+        if(packsize==29)
+          encflags[i]=datapack[25+i];
       }
     }
-    else if(packsize==7)                                                     // use 1 configuration for all encoders
+    else if(packsize==7 || packsize==8)                                      // use 1 configuration for all encoders
     {
       for(byte i=0;i<4;i++)
       {
@@ -57,6 +59,8 @@ void Commands()
         encres[i]=datapack[3]*256+datapack[4];
         reserve[i]=datapack[5];
         stalltm[i]=datapack[6];
+        if(packsize==8)
+            encflags[i]=datapack[7];
       }
     }
     for(byte i=0;i<4;i++)
