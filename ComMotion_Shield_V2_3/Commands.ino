@@ -45,8 +45,8 @@ void Commands()
       {
         motrpm[i]=datapack[i*2+1]*256+datapack[i*2+2];
         encres[i]=datapack[i*2+9]*256+datapack[i*2+10];
-        reserve[i]=datapack[18+i];
-        stalltm[i]=datapack[22+i];
+        reserve[i]=datapack[17+i];
+        stalltm[i]=datapack[21+i];
       }
     }
     else if(packsize==7)                                                     // use 1 configuration for all encoders
