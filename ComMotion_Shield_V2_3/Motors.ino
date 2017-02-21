@@ -15,7 +15,12 @@ void Motors()
     atime=micros();                                                           // update atime with time of most recent state change
         
     if(inc > 0)
-      acount=acount + ((int)inc) * ((mspeed[motora]>0)-(mspeed[motora]<0));   // update encoder A state change counter
+    {
+      if(mspeed[motora]>0 || (encflags[motora] & 0x1))                        // update encoder A state change counter
+        acount += inc;
+      else if (mspeed[motora]<0)
+        acount -= inc;
+    }
     actual=maxpulse[motora]/abs(mspeed[motora]);                              // calculate desired time in uS between encoder pulses
     if(actual>apulse && apwm>0) apwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<apulse && apwm<255) apwm++;                                     // if motor is running too slow then increase PWM
@@ -33,7 +38,12 @@ void Motors()
     btime=micros();                                                           // update btime with time of most recent state change
         
     if(inc > 0)
-      bcount=bcount+((int)inc) * ((mspeed[motorb]>0)-(mspeed[motorb]<0));     // update encoder B state change counter
+    {
+      if(mspeed[motorb]>0 || (encflags[motorb] & 0x1))                        // update encoder B state change counter
+        bcount += inc;
+      else if (mspeed[motorb]<0)
+        bcount -= inc;
+    }
     actual=maxpulse[motorb]/abs(mspeed[motorb]);                              // calculate desired time in uS between encoder pulses
     if(actual>bpulse && bpwm>0) bpwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<bpulse && bpwm<255) bpwm++;                                     // if motor is running too slow then increase PWM
