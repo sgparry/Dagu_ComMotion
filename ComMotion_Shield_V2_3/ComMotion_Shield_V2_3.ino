@@ -171,7 +171,7 @@ void loop()
 
   if(mcu==0 && analog==4 && powerdown<250)                                    // battery voltage has just been read and no powerdown has occured
   {
-    if(analogvalue[4]<=lowbat)                                                // compare battery voltage to low battery voltage
+    if(voltage<=lowbat)                                                // compare battery voltage to low battery voltage
     {
       eflag=eflag|B00010000;                                                  // bit 5 indicates power dipping below batlow voltage
       powerdown++;                                                            // increment shutdown counter if battery voltage is low
