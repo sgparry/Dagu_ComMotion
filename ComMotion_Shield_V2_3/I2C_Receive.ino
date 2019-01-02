@@ -16,7 +16,7 @@ void I2C_Receive(int bytes)                                   // received comman
   
   if(mode==DCBCM_DEMO && command<DCC_SERIAL_SEND)
   {
-    mode=0;                                                   // disable demo mode
+    mode=DCBCM_SERIAL_I2C;                                    // disable demo mode
     EEPROM.write(1,mode);
   }
   

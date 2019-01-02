@@ -54,7 +54,7 @@ void SerialInput()
     {
       if(mode==DCBCM_DEMO)
       {
-        mode=0;                                                                         // disable demo mode
+        mode=DCBCM_SERIAL_I2C;                                                          // disable demo mode
         EEPROM.write(1,mode);
       }
     }
@@ -65,7 +65,7 @@ void SerialInput()
     serpack[0]='S';                                                                     // this header is used to indicate
     serpack[1]='P';                                                                     // the start of a new data packet
     serpack[2]=mcu+49;                                                                  // and where the data came from
-    serpack[3]=':';                                                                      // "SP1:" or "SP2:" is serial port 1 or 2
+    serpack[3]=':';                                                                     // "SP1:" or "SP2:" is serial port 1 or 2
     while(Serial.available()>0)
     {
       serpack[j]=Serial.read();                                                         // data is read from the serial buffer and added to the datapack
@@ -80,8 +80,8 @@ void SerialInput()
       Wire.write(serpack,j);                                                            // send data with 4 byte header
       Wire.endTransmission();                                                           // release I²C bus
     }
-    else if ((configuration==DCSM_COMMANDS_ON_PORT1_DATA_TO_PORT1 && mcu==1) ||
-      (configuration==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2 && mcu==0))                  // pass serial data to other serial port
+    else if ((sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_PORT1 && mcu==1) ||
+      (sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2 && mcu==0))                        // pass serial data to other serial port
     {
       byte pass=master;
       if(mcu==0) pass=address+1;                                                        // address of MCU to pass data to

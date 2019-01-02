@@ -24,7 +24,7 @@ long maxpulse[4];                                                             //
 //============================================================================== Configuration Data======================================================================================
 
 byte demo;                                                                    // demo mode                   modes : 0 = OFF,  1 = Line,  2 = Object
-byte mode=0;                                                                  // default to standby          modes : 0 = standby, 1 = I²C command, 2 = Serial command, 3 = Scamper Demo
+byte mode=0;                                                                  // default to I²C / Serial     modes : 0 = I²C / Serial command, 1 = Demo
 byte configuration=0;                                                         // default to Omni 3 wheel     config: 0 = Omni 3 wheel, 1 = Omni 4 wheel, 2 = Mecanum, 3 = Individual
 byte lowbat=60;                                                               // low battery voltage (60 = 6.0V)
 int maxamps[4];                                                               // used to set maximum current allowed (255 = 2.55A) for each motor
@@ -148,7 +148,7 @@ void setup()
   {
   }
   
-  if(mode)                                                                    // if the shield is in demo mode
+  if(mode==DCBCM_DEMO)                                                        // if the shield is in demo mode
   {
     if(demo==0) Beep(3);
     if(demo==1) Tune();                                                       // Demo mode - play "Row, row, row your boat" using the motors for speakers
@@ -168,7 +168,7 @@ void loop()
   analog++;                                                                   // select a different input each loop (analog read takes 260uS)
   if(analog>4) analog=0;                                                      // rotate through current A, current B, A3, A6 and A7
   
-  if(mode && demo>0)
+  if(mode==DCBCM_DEMO && demo>0)
   {
     if(demo==1) LineFollow();
     if(demo==2) Avoidance();
@@ -185,8 +185,8 @@ void loop()
   {
     if(voltage<=lowbat && (voltage > 51 || voltage < 49) )                  // compare battery voltage to low battery voltage, but allow for USB (5V)
     {
-      eflag=eflag|DCME_LOW_BATTERY;                                             // bit 5 indicates power dipping below batlow voltage
-//      powerdown++;                                                            // increment shutdown counter if battery voltage is low
+      eflag = eflag | DCME_LOW_BATTERY;                                       // bit 5 indicates power dipping below batlow voltage
+      powerdown++;                                                            // increment shutdown counter if battery voltage is low
     }
     else
     {
