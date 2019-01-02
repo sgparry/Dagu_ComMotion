@@ -1,29 +1,30 @@
 #define dword(h,l) ((h)<<16 + (l))
 #define lowWord(dw) ((uint16_t) ((dw) & 0xffff))
 #define highWord(dw) ((uint16_t) ((dw) >> 16))
+#include <Dagu_ComMotionCommon.h>
 
 void Commands()
 {
-  if(mcu==0 && (command<5 || command==10))                                   // if this is MCU1 and command is 0-4 then repeat command to MCU2 
+  if(mcu==0 && (command<DCC_SERIAL_SEND || command==DCC_EEROM_DEFAULTS))     // if this is MCU1 and command is 0-4 then repeat command to MCU2 
   {
     Wire.beginTransmission(address+1);                                       // take control of I²C bus and address MCU2
     Wire.write(datapack,packsize);                                           // relay commands to MCU2
     Wire.endTransmission();                                   
   }
   
-  if(command==10) 
+  if(command==DCC_EEROM_DEFAULTS) 
   {
     EEPROMdefaults();
-    command=255;
+    command=DCC_NONE;
     return;
   }
   
-  if(command>15) command-=16;                                                // 16 is added (bit 3 set high) for internal commands (no repeat)
+  if(command>DCC_DEMO_SYNC) command-=DCC_INTERNAL;                                // 16 is added (bit 3 set high) for internal commands (no repeat)
   
   
   
   
-  if(command==1 && packsize==10) //============================================ Basic Configuration Data Received =================================================
+  if(command==DCC_BASIC_CONFIG && packsize==sizeof(Dagu_ComMotionBasicConfigPacket)) //============================================ Basic Configuration Data Received =================================================
   {
     mode=datapack[1];
     configuration=datapack[2];
@@ -36,27 +37,27 @@ void Commands()
     master=datapack[9];
     EEPROMsave();                                                            // update EEPROM
     TXconfig();
-    command=255;
+    command=DCC_NONE;
     return;
   }
 
-  if(command==2) //============================================================ Encoder Configuration Data Received =================================================
+  if(command==DCC_ENCODER_CONFIG) //============================================================ Encoder Configuration Data Received =================================================
   {
-    if(packsize==2) // just extended flags, all encoders
+    if(packsize==sizeof(Dagu_ComMotionEncoderConfigFlagsPacket1)) // just extended flags, all encoders
     {
       for(byte i=0;i<4;i++)
       {
         encflags[i]=datapack[1];
       }
     }
-    else if(packsize==5) // just extended flags, individually
+    else if(packsize==sizeof(Dagu_ComMotionEncoderConfigFlagsPacket4)) // just extended flags, individually
     {
       for(byte i=0;i<4;i++)
       {
         encflags[i]=datapack[1+i];
       }
     }
-    if(packsize==25 || packsize==29)                                         // configure each encoder individually
+    if(packsize == sizeof(Dagu_ComMotionEncoderConfigPacket4) || packsize == sizeof(Dagu_ComMotionEncoderConfigPacketX4))                                         // configure each encoder individually
     {
       for(byte i=0;i<4;i++)
       {
@@ -64,11 +65,11 @@ void Commands()
         encres[i]=datapack[i*2+9]*256+datapack[i*2+10];
         reserve[i]=datapack[17+i];
         stalltm[i]=datapack[21+i];
-        if(packsize==29)
+        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX4))
           encflags[i]=datapack[25+i];
       }
     }
-    else if(packsize==7 || packsize==8)                                      // use 1 configuration for all encoders
+    else if(packsize == sizeof(Dagu_ComMotionEncoderConfigPacket1) || packsize == sizeof(Dagu_ComMotionEncoderConfigPacketX1))                                      // use 1 configuration for all encoders
     {
       for(byte i=0;i<4;i++)
       {
@@ -76,7 +77,7 @@ void Commands()
         encres[i]=datapack[3]*256+datapack[4];
         reserve[i]=datapack[5];
         stalltm[i]=datapack[6];
-        if(packsize==8)
+        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX4))
             encflags[i]=datapack[7];
       }
     }
@@ -93,13 +94,13 @@ void Commands()
     }
     EEPROMsave();                                                            // update EEPROM
     TXconfig();
-    command=255;
+    command=DCC_NONE;
     return;
   }
 
-  if(command==3 && (packsize==7 || packsize==9)) //============================ Motor Control =======================================================================
+  if(command==DCC_MOTOR_CONTROL && (packsize == sizeof(Dagu_ComMotionOmniMotorControlPacket) || packsize == sizeof(Dagu_ComMotionIndeMotorControlPacket))) //============================ Motor Control =======================================================================
   {
-    if((configuration==3 || configuration==19) && packsize==9)               // Individual motor control  
+    if((configuration==DCC_INDEPENDENT || configuration==DCC_INDEPENDENT+DCC_NO_ENCODERS) && packsize==sizeof(Dagu_ComMotionIndeMotorControlPacket))               // Individual motor control  
     {
       for(byte i=0;i<4;i++)
       {
@@ -131,22 +132,22 @@ void Commands()
       
       Trigonometry();
     }
-    command=255;  
+    command=DCC_NONE;  
     return;
   }
 
-  if(command==4 && packsize==6) //============================================= Serial port configuration ===========================================================
+  if(command==DCC_SERIAL_CONFIG && packsize == sizeof(Dagu_ComMotionSerialConfigPacket)) //============================================= Serial port configuration ===========================================================
   {
     baudrate[0]=datapack[1]*256U+datapack[2];
     baudrate[1]=datapack[3]*256U+datapack[4];
     sermode=datapack[5];
     Serial.begin(baudrate[mcu]);                                             // change serial port baud rate
     EEPROMsave();                                                            // update EEPROM
-    command=255;
+    command=DCC_NONE;
     return;
   }
 
-  if(command==5 && packsize>2 && packsize<33) //=============================== Send Serial Data =====================================================================
+  if(command==DCC_SERIAL_SEND && packsize>2 && packsize<33) //=============================== Send Serial Data =====================================================================
   {
     if((mcu+1)==datapack[1])
     {
@@ -156,11 +157,11 @@ void Commands()
       }
       Serial.write(serpack,packsize-2);
     }
-    command=255;
+    command=DCC_NONE;
     return;
   }  
 
-  if(command==6 && (packsize==2 || packsize==3)) //============================================= Status request ======================================================================
+  if(command==DCC_STATUS_REQUEST && (packsize == sizeof(Dagu_ComMotionStatusRequestPacket) || packsize == sizeof(Dagu_ComMotionStatusRequestPacketX)) ) //============================================= Status request ======================================================================
   {
     // Status Command Bit Meanings
     // ===========================
@@ -185,37 +186,39 @@ void Commands()
     byte spsize=0;                                                           // intitial send pack size = 0
     int request=datapack[1];                                                 // copy datapack to global variable "request" ASAP so datapack can be reused
 
-    if(((request&16) && mcu==0) || ((request&8) && mcu==1))                 // start the packet with the MCU number, if requested.
+    if(((request & Dagu_ComMotionStatusRequestPacket::DR_MCU_NUM_MCU1) && mcu==0) ||
+      ((request & Dagu_ComMotionStatusRequestPacket::DR_MCU_NUM_MCU2) && mcu==1))                               // start the packet with the MCU number, if requested.
     {
       sendpack[spsize+0] = mcu + 1;
       spsize++;
     }
     
-    if(request&1)// Bit 0:                                                   // return encoder counter values
+    if(request & Dagu_ComMotionStatusRequestPacket::DR_ENCODERS)// Bit 0:                                       // return encoder counter values
     {
       sendpack[spsize+0] =highByte(acount);
       sendpack[spsize+1] = lowByte(acount);
       sendpack[spsize+2] =highByte(bcount);
       sendpack[spsize+3] = lowByte(bcount);
-      spsize+=4;                                                              // increment pack size by 4 bytes (counts from 2 encoders only)
+      spsize+=4;                                                                                                // increment pack size by 4 bytes (counts from 2 encoders only)
     }
 
-    if(request&2)// Bit 1:                                                   // reset encoder counters
+    if(request & Dagu_ComMotionStatusRequestPacket::DR_ENCODERS_RESET)// Bit 1:                                 // reset encoder counters
     {
       acount=0;
       bcount=0;
     }
 
-    if(request&4)// Bit 2:                                                   // return motor currents
+    if(request & Dagu_ComMotionStatusRequestPacket::DR_CURRENT_DRAW)// Bit 2:                                   // return motor currents
     {
       sendpack[spsize+0] =highByte(analogvalue[0]);
       sendpack[spsize+1] = lowByte(analogvalue[0]);
       sendpack[spsize+2] =highByte(analogvalue[1]);
       sendpack[spsize+3] = lowByte(analogvalue[1]);
-      spsize+=4;                                                             // increment pack size by 4 bytes (current from 2 motors only)
+      spsize+=4;                                                                                                // increment pack size by 4 bytes (current from 2 motors only)
     }
 
-    if(((request&8) && mcu==0) || ((request&16) && mcu==1))// Bits 3&4:      // return MCU analog values
+    if(((request & Dagu_ComMotionStatusRequestPacket::DR_ANALOG_VALS_MCU1) && mcu==0) ||
+      ((request & Dagu_ComMotionStatusRequestPacket::DR_ANALOG_VALS_MCU2) && mcu==1))// Bits 3&4:               // return MCU analog values
     {
       sendpack[spsize+0]=highByte(analogvalue[2]);
       sendpack[spsize+1]= lowByte(analogvalue[2]);
@@ -226,12 +229,12 @@ void Commands()
       spsize+=6;
     }
 
-    if(request&32)// Bit 5:                                                  // return error log
+    if(request & Dagu_ComMotionStatusRequestPacket::DR_MOTOR_ERR_LOG)// Bit 5:                                  // return error log
     {
       sendpack[spsize++]=eflag;
     }
 
-    if(request&64)// Bit 6:                                                  // clear error log
+    if(request & Dagu_ComMotionStatusRequestPacket::DR_CLEAR_MOTOR_ERR_LOG)// Bit 6:                            // clear error log
     {  
       eflag=0;
     }
@@ -278,20 +281,20 @@ void Commands()
     }
     
     byte returnaddress=master;                                               // return address is I²C master by default
-    if((request&128) && mcu==0) returnaddress=address+1;                     // bit 7 indicates internal request - return to other processor
-    if((request&128) && mcu==1) returnaddress=address-1;                     // bit 7 indicates internal request - return to other processor
-
+    if((request & Dagu_ComMotionStatusRequestPacket::DR_INTERNAL) && mcu==0) returnaddress=address+1;           // bit 7 indicates internal request - return to other processor
+    if((request & Dagu_ComMotionStatusRequestPacket::DR_INTERNAL) && mcu==1) returnaddress=address-1;           // bit 7 indicates internal request - return to other processor
+    
     Wire.beginTransmission(returnaddress);
     Wire.write(sendpack,spsize);
     Wire.endTransmission();
-    command=255;
+    command=DCC_NONE;
   }
-  if(command==11 && packsize==2)
+  if(command==DCC_BEEP && packsize==sizeof(Dagu_ComMotionBeepPacket))
   {
     Beep(datapack[1]);
     command=255;
   }
-  if(command==12 && packsize>=2)
+  if(command==DCC_ECHO && packsize>=sizeof(Dagu_ComMotionEchoPacket))
   {
     byte returnaddress=datapack[1];
     Wire.beginTransmission(returnaddress);
