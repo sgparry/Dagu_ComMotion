@@ -1,10 +1,11 @@
 //======================================================================================== Takes data from serial port and redirects it as determined by serial mode =======================================
 void SerialInput()                                                        
 {
-  if((mcu==0 && (sermode==1 || sermode==3)) || (mcu==1 && (sermode==2 || sermode==4)))  // Command received on serial port
+  if((mcu==0 && (sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_MASTER || sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_PORT1)) || 
+    (mcu==1 && (sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_MASTER || sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2)))  // Command received on serial port
   {
     byte i=0;
-    command=255;
+    command=DCC_NONE;
     while(Serial.available()>0)
     {
       datapack[i]=Serial.read();                                                        // data is read from the serial buffer and added to the command datapack
@@ -12,37 +13,37 @@ void SerialInput()
     }
     
     //------------------------------------------------------------------------------------ Verify that command data has been received ---------------------------------------------------------------------
-    if(datapack[0]==0 && i==10)
+    if(datapack[0]==DCC_BASIC_CONFIG && i==sizeof(Dagu_ComMotionBasicConfigPacket))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==1 && (i==7 || i==25))
+    if(datapack[0]==DCC_ENCODER_CONFIG && (i == sizeof(Dagu_ComMotionEncoderConfigPacket4) || i == sizeof(Dagu_ComMotionEncoderConfigPacketX4)))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==2 && (i==6 || i==8))
+    if(datapack[0]==DCC_MOTOR_CONTROL && (i==sizeof(Dagu_ComMotionOmniMotorControlPacket) || i==sizeof(Dagu_ComMotionIndeMotorControlPacket)))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==3 && i==6)
+    if(datapack[0]==DCC_SERIAL_CONFIG && i==sizeof(Dagu_ComMotionSerialConfigPacket))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==4 && i>2)
+    if(datapack[0]==DCC_SERIAL_SEND && i>2)
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(command==255)
+    if(command==DCC_NONE)
     {
       Serial.println(F("Command not recognized!"));
       Serial.print(F("Command:"));Serial.print(datapack[0],DEC);
@@ -83,7 +84,7 @@ void SerialInput()
       if(mcu==0) pass=address+1;                                                        // address of MCU to pass data to
       if(mcu==1) pass=address-1;
       Wire.beginTransmission(pass);                                                     
-      Wire.write(20);                                                                   // command to internal send serial data (4+16)
+      Wire.write(DCC_SERIAL_CONFIG + DCC_INTERNAL);                                     // command to internal send serial data (4+16)
       Wire.write(j);                                                                    // serial pack size including header data
       Wire.write(serpack,j);                                                            // send serialpack
       Wire.endTransmission();

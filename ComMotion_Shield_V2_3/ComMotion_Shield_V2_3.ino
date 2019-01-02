@@ -1,6 +1,7 @@
 
 #include <EEPROM.h>
 #include <Wire.h>
+#include <Dagu_ComMotionCommon.h>
 #include "IOpins.h"
 #include "Notes.h"
 
@@ -54,9 +55,9 @@ int  analogvalue[5];                                                          //
 byte datapack[32];                                                            // command/config data packet
 byte sendpack[32];                                                            // data send packet for returning status data
 byte serpack[36];                                                             // serial data pack
-byte syncpack=1;                                                              // sync pack type (default: 1=controller config) 
+byte syncpack=DCC_BASIC_CONFIG;                                               // sync pack type (default: 1=controller config) 
 byte packsize;                                                                // size of command packet    
-byte command=255;                                                             // 255 = no command 
+byte command=DCC_NONE;                                                        // 255 = no command 
 byte analog;                                                                  // read different analog input each loop (analog conversion takes 260uS)
 byte powerdown=0;                                                             // a value of 1 shuts down all motors to conserve power and prevent a brownout condition
 
@@ -109,7 +110,7 @@ void setup()
     TWBR=12;                                                                  // change the I²C clock to 400kHz
   }
   
-  if(mode==1 && mcu==0)                                                       // if demo mode is selected
+  if(mode==DCBCM_DEMO && mcu==0)                                                       // if demo mode is selected
   {
     demo+=1;                                                                  // toggle demo every time power is turned on or reset is pressed
     if(demo>1) demo=0;                                                        // limit demo to 0, 1 or 2
@@ -119,7 +120,7 @@ void setup()
     EEPROM.write(0,demo);                                                     // update demo mode
     
     Wire.beginTransmission(address+1);
-    datapack[0]=15;                                                           // command 15 used to syncronize demo mode 
+    datapack[0]=DCC_DEMO_SYNC;                                                // command 15 used to syncronize demo mode 
     datapack[1]=demo;
     datapack[2]=mode;
     Wire.write(datapack,3);
@@ -192,7 +193,7 @@ void loop()
   
      
   if(Serial.available()>0) SerialInput();                                     // receive and transfer serial data depending on serial mode
-  if(command<32) Commands();                                                  // respond to command from I²C bus or Serial interface
+  if(command<DCC_LIMIT) Commands();                                           // respond to command from I²C bus or Serial interface
   if(encoders)
   {
     Motors();                                                                 // if encoders are enabled then use then to control motor speeds
@@ -205,5 +206,3 @@ void loop()
     digitalWrite(dirbpin,mspeed[mcu*2+1]>0);                                  // set motor B direction
   }
 }
-
-

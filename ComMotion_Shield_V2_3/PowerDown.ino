@@ -5,7 +5,7 @@ void PowerDown()
   eflag=eflag|B00100000;                                                                        // error flag bit 6 indicates power shut down due to low battery voltage
   
   Wire.beginTransmission(address+1);                                                             // take control of I²C bus and address MCU2
-  Wire.write(3);                                                                                 // datapacket #3 - send power down command to M3 & M4
+  Wire.write(DCC_MOTOR_CONTROL);                                                                 // datapacket #3 - send power down command to M3 & M4
   for(byte i=0;i<8;i++)                                                                       
   {
     Wire.write(0);                                                                                // set all motor speeds to 0
