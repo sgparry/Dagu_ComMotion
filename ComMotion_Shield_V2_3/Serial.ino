@@ -72,7 +72,7 @@ void SerialInput()
       j++;
     }
     
-    if (sermode==DCSM_DATA_TO_MASTER || 
+    if (sermode==DCSM_DATA_TO_MASTER ||
       (sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_MASTER && mcu==1) ||
       (sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_MASTER && mcu==0))                       // send serial data to I²C master
     {
@@ -81,7 +81,7 @@ void SerialInput()
       Wire.endTransmission();                                                           // release I²C bus
     }
     else if ((sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_PORT1 && mcu==1) ||
-      (configuration==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2 && mcu==0))                  // pass serial data to other serial port
+      (sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2 && mcu==0))                        // pass serial data to other serial port
     {
       byte pass=master;
       if(mcu==0) pass=address+1;                                                        // address of MCU to pass data to

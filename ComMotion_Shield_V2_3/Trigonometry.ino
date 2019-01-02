@@ -1,6 +1,6 @@
 void Trigonometry()
 {
-  if(configuration==0)                                                                        // 3 Omni wheels
+  if(configuration==DCC_3XOMNI)                                                               // 3 Omni wheels
   {
     if(mcu==0)
     {
@@ -15,7 +15,7 @@ void Trigonometry()
     return;
   }
   
-  if(configuration==1)                                                                        // 4 Omni wheels
+  if(configuration==DCC_4XOMNI)                                                               // 4 Omni wheels
   {
     if(mcu==0)
     {
@@ -30,7 +30,7 @@ void Trigonometry()
     return;
   }
   
-  if(configuration==2)                                                                        // Mecanum Wheels
+  if(configuration==DCC_MECANUM)                                                              // Mecanum Wheels
   {
     if(mcu==0)
     {
