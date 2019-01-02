@@ -52,9 +52,9 @@ void SerialInput()
     }
     else
     {
-      if(mode==1)
+      if(mode==DCBCM_DEMO)
       {
-        mode=0;                                                                         // disable demo mode
+        mode=DCBCM_SERIAL_I2C;                                                          // disable demo mode
         EEPROM.write(1,mode);
       }
     }
@@ -62,23 +62,26 @@ void SerialInput()
   else
   {
     byte j=4;                                                                           // byte 1-4 is serial pack header
-    serpack[0]=83;                                                                      // this header is used to indicate
-    serpack[1]=80;                                                                      // the start of a new data packet
+    serpack[0]='S';                                                                     // this header is used to indicate
+    serpack[1]='P';                                                                     // the start of a new data packet
     serpack[2]=mcu+49;                                                                  // and where the data came from
-    serpack[3]=58;                                                                      // "SP1:" or "SP2:" is serial port 1 or 2
+    serpack[3]=':';                                                                     // "SP1:" or "SP2:" is serial port 1 or 2
     while(Serial.available()>0)
     {
       serpack[j]=Serial.read();                                                         // data is read from the serial buffer and added to the datapack
       j++;
     }
     
-    if(sermode==0 || (sermode==1 && mcu==1) || (sermode==2 && mcu==0))                  // send serial data to I²C master
+    if (sermode==DCSM_DATA_TO_MASTER || 
+      (sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_MASTER && mcu==1) ||
+      (sermode==DCSM_COMMANDS_ON_PORT2_DATA_TO_MASTER && mcu==0))                       // send serial data to I²C master
     {
       Wire.beginTransmission(master);                                                   // address I²C master
       Wire.write(serpack,j);                                                            // send data with 4 byte header
       Wire.endTransmission();                                                           // release I²C bus
     }
-    else if((configuration==3 && mcu==1) || (configuration==4 && mcu==0))               // pass serial data to other serial port
+    else if ((sermode==DCSM_COMMANDS_ON_PORT1_DATA_TO_PORT1 && mcu==1) ||
+      (configuration==DCSM_COMMANDS_ON_PORT2_DATA_TO_PORT2 && mcu==0))                  // pass serial data to other serial port
     {
       byte pass=master;
       if(mcu==0) pass=address+1;                                                        // address of MCU to pass data to

@@ -14,9 +14,9 @@ void I2C_Receive(int bytes)                                   // received comman
   //Serial.print("Pack size:");Serial.println(bytes,DEC);
   //Serial.print("Command:");Serial.println(command,DEC);
   
-  if(mode==1 && command<DCC_SERIAL_SEND)
+  if(mode==DCBCM_DEMO && command<DCC_SERIAL_SEND)
   {
-    mode=0;                                                   // disable demo mode
+    mode=DCBCM_SERIAL_I2C;                                    // disable demo mode
     EEPROM.write(1,mode);
   }
   

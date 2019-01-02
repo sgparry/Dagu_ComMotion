@@ -61,8 +61,8 @@ void Motors()
   if(analogvalue[0]>maxamps[motora])                                          // motor A maximum current exceeded
   {
     apwm=apwm/2;                                                              // halve pwm
-    if(mcu==0) eflag=eflag|B00000001;                                         // bit 0 indicates M1 has exceeded current limit
-    if(mcu==1) eflag=eflag|B00000100;                                         // bit 2 indicates M3 has exceeded current limit
+    if(mcu==0) eflag = eflag | DCME_M1_OVER_CURRENT;                          // bit 0 indicates M1 has exceeded current limit
+    if(mcu==1) eflag = eflag | DCME_M3_OVER_CURRENT;                          // bit 2 indicates M3 has exceeded current limit
   }
 
   if(mspeed[motora]==0)                                                       // if motor A speed is supposed to be 0 or motor current exceeds limit
@@ -83,8 +83,8 @@ void Motors()
   if(analogvalue[1]>maxamps[motorb])                                          // motor B maximum current exceeded
   {
     bpwm=bpwm/2;                                                              // halve pwm
-    if(mcu==0) eflag=eflag|B00000010;                                         // bit 1 indicates M2 has exceeded current limit
-    if(mcu==1) eflag=eflag|B00001000;                                         // bit 3 indicates M4 has exceeded current limit
+    if(mcu==0) eflag = eflag | DCME_M2_OVER_CURRENT;                          // bit 1 indicates M2 has exceeded current limit
+    if(mcu==1) eflag = eflag | DCME_M4_OVER_CURRENT;                          // bit 3 indicates M4 has exceeded current limit
   }
 
   if(mspeed[motorb]==0)                                                       // if motor B speed is supposed to be 0 or motor current exceeds limit
@@ -115,5 +115,3 @@ void Bencoder()                                                               //
 {
   binc[slider] ++;                                                                    // increment holding counter B
 }
-
-
