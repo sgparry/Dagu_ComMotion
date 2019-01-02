@@ -14,6 +14,8 @@ volatile uint8_t ainc[2];                                                     //
 volatile uint8_t binc[2];                                                     // windowed temporary counter to indicate encoder B has changed state
 volatile uint8_t slider;                                                      // indicates which window slot is currently live
 volatile unsigned long apulse,bpulse;                                         // width of encoder pulses in uS
+byte apwm,bpwm;                                                               // A and B motor speeds
+byte astall,bstall;                                                           // flags to indicate a stalled motor
 volatile unsigned long atime,btime;                                           // stores time of last encoder state change
 byte motora,motorb;                                                           // values will be 0&1 on MCU1 and 2&3 on MCU2     - precalculated to increase speed
 long maxpulse[4];                                                             // max time between encoder state changes in uS   - precalculated to increase speed
@@ -79,8 +81,13 @@ void setup()
   
   for(byte i=0;i<4;i++)
   {
-    maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;
-    maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;
+      maxpulse[i] = (long) ( (60LL * 1000000LL * 100LL * 100LL * 255LL) / (int64_t(motrpm[i])*int64_t(encres[i]) * (100LL-int64_t(reserve[i]))) );
+                                                                              // 60 * 1000000 - convert from rpm to period in uS
+                                                                              // 255 = max motor pwm, will divide later for smaller values
+                                                                              // 100 = encRes divisor, 100 = reserve percentage divisor
+                                                                              // 100-reserve = precentage after reserve
+                                                                              // motrpm = motor revs per minute
+                                                                              // encres = encoder resolution in 100ths of a segment per revolution
   }
   
   DDRD=B00000011;                                                             // ensure dipswitch pins (PD4-PD7) and encoder inputs (PD2,PD3) plus RX and TX are set to input
@@ -99,7 +106,7 @@ void setup()
   Wire.setTimeout(1L);                                                        // sets a timeout of 1mS for I²C
   Wire.flush();
   delay(100);                                                                 // required to ensure both processors are initialized before inter-communications begins
-    
+
   if(i2cfreq==0)                                                              // thanks to Nick Gammon: http://gammon.com.au/i2c
   {
     TWBR=72;                                                                  // default I²C clock is 100kHz
@@ -175,10 +182,10 @@ void loop()
 
   if(mcu==0 && analog==4 && powerdown<250)                                    // battery voltage has just been read and no powerdown has occured
   {
-    if(voltage<=lowbat)                                                // compare battery voltage to low battery voltage
+    if(voltage<=lowbat && (voltage > 51 || voltage < 49) )                  // compare battery voltage to low battery voltage, but allow for USB (5V)
     {
       eflag=eflag|B00010000;                                                  // bit 5 indicates power dipping below batlow voltage
-      powerdown++;                                                            // increment shutdown counter if battery voltage is low
+//      powerdown++;                                                            // increment shutdown counter if battery voltage is low
     }
     else
     {
@@ -186,7 +193,8 @@ void loop()
     }
     if(powerdown>249) PowerDown();                                            // if battery voltage consistantly low for 250 samples shutdown all motors
   }
-  if(powerdown>249) return;                                                   // power must be cycled or reset button pressed to resume
+  if(powerdown>249 && !(command==0 || command==1 || command==4 || command==6))// allow configuration and status commands, else how do you find reason for shutdown / adjust btty level.
+    return;                                                                   // power must be cycled or reset button pressed to resume
   
   //---------------------------------------------------------------------------- Shield Functions ---------------------------------------------------------------------------------------
   
@@ -205,5 +213,3 @@ void loop()
     digitalWrite(dirbpin,mspeed[mcu*2+1]>0);                                  // set motor B direction
   }
 }
-
-

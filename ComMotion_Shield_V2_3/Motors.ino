@@ -3,8 +3,6 @@ void Motors()
   //============================================================================ Motor Speed Control ====================================================================================
 
   unsigned long actual;                                                       // temporary calculation of desired speed in uS per encoder pulse
-  static byte apwm,bpwm;                                                      // A and B motor speeds
-  static byte astall,bstall;                                                  // flags to indicate a stalled motor
 
   byte oslider = slider;
   slider ^= 1;                                                                // switch slots so that the isr can continue without clashing.

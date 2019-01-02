@@ -1,3 +1,6 @@
+#define dword(h,l) ((h)<<16 + (l))
+#define lowWord(dw) ((uint16_t) ((dw) & 0xffff))
+#define highWord(dw) ((uint16_t) ((dw) >> 16))
 
 void Commands()
 {
@@ -39,6 +42,20 @@ void Commands()
 
   if(command==2) //============================================================ Encoder Configuration Data Received =================================================
   {
+    if(packsize==2) // just extended flags, all encoders
+    {
+      for(byte i=0;i<4;i++)
+      {
+        encflags[i]=datapack[1];
+      }
+    }
+    else if(packsize==5) // just extended flags, individually
+    {
+      for(byte i=0;i<4;i++)
+      {
+        encflags[i]=datapack[1+i];
+      }
+    }
     if(packsize==25 || packsize==29)                                         // configure each encoder individually
     {
       for(byte i=0;i<4;i++)
@@ -65,8 +82,14 @@ void Commands()
     }
     for(byte i=0;i<4;i++)
     {
-      maxpulse[i]=60000000L/(long(motrpm[i])*long(encres[i])/100L)*255L;     // update maxpulse values
-      maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;
+      maxpulse[i] = (long) ( (60LL * 1000000LL * 100LL * 100LL * 255LL) / (int64_t(motrpm[i])*int64_t(encres[i]) * (100LL-int64_t(reserve[i]))) );
+                                                                             // update maxpulse
+                                                                             // 60 * 1000000 - convert from rpm to period in uS
+                                                                             // 255 = max motor pwm, will divide later for smaller values
+                                                                             // 100 = encRes divisor, 100 = reserve percentage divisor
+                                                                             // 100-reserve = precentage after reserve
+                                                                             // motrpm = motor revs per minute
+                                                                             // encres = encoder resolution in 100ths of a segment per revolution
     }
     EEPROMsave();                                                            // update EEPROM
     TXconfig();
@@ -81,6 +104,8 @@ void Commands()
       for(byte i=0;i<4;i++)
       {
         mspeed[i]=datapack[i*2+1]*256+datapack[i*2+2];
+        apwm = abs(mspeed[motora]);
+        bpwm = abs(mspeed[motorb]);
       }
     }
     else                                                                     // Omni or Mecanum Wheels 
@@ -135,7 +160,7 @@ void Commands()
     return;
   }  
 
-  if(command==6 && packsize==2) //============================================= Status request ======================================================================
+  if(command==6 && (packsize==2 || packsize==3)) //============================================= Status request ======================================================================
   {
     // Status Command Bit Meanings
     // ===========================
@@ -210,16 +235,70 @@ void Commands()
     {  
       eflag=0;
     }
+
+    if(packsize==3)
+    {
+      int request2=datapack[2];
+      if(request2 & 1)
+      {
+        for(int i = 0; i < 2; i++)
+        {
+          sendpack[spsize+0]=highByte(highWord(maxpulse[i]));
+          sendpack[spsize+1]= lowByte(highWord(maxpulse[i]));
+          sendpack[spsize+2]=highByte( lowWord(maxpulse[i]));
+          sendpack[spsize+3]= lowByte( lowWord(maxpulse[i]));
+          spsize+=4;
+        }
+      }
+      if(request2 & 2)
+      {
+        sendpack[spsize+0]=highByte(highWord(apulse));
+        sendpack[spsize+1]= lowByte(highWord(apulse));
+        sendpack[spsize+2]=highByte( lowWord(apulse));
+        sendpack[spsize+3]= lowByte( lowWord(apulse));
+        spsize+=4;
+        sendpack[spsize+0]=highByte(highWord(bpulse));
+        sendpack[spsize+1]= lowByte(highWord(bpulse));
+        sendpack[spsize+2]=highByte( lowWord(bpulse));
+        sendpack[spsize+3]= lowByte( lowWord(bpulse));
+        spsize+=4;
+      }
+      if(request2 & 4)
+      {
+        sendpack[spsize+0]= apwm;
+        sendpack[spsize+1]= bpwm;
+        spsize+=2;
+      }
+      if(request2 & 8)
+      {
+        sendpack[spsize+0]= astall;
+        sendpack[spsize+1]= bstall;
+        spsize+=2;
+      }
+    }
     
     byte returnaddress=master;                                               // return address is I²C master by default
     if((request&128) && mcu==0) returnaddress=address+1;                     // bit 7 indicates internal request - return to other processor
     if((request&128) && mcu==1) returnaddress=address-1;                     // bit 7 indicates internal request - return to other processor
-    
+
     Wire.beginTransmission(returnaddress);
     Wire.write(sendpack,spsize);
     Wire.endTransmission();
     command=255;
   }
+  if(command==11 && packsize==2)
+  {
+    Beep(datapack[1]);
+    command=255;
+  }
+  if(command==12 && packsize>=2)
+  {
+    byte returnaddress=datapack[1];
+    Wire.beginTransmission(returnaddress);
+    Wire.write(address);
+    Wire.write(mcu);
+    Wire.write(&datapack[2],packsize-2);
+    Wire.endTransmission();
+    command=255;
+  }
 }
-
-

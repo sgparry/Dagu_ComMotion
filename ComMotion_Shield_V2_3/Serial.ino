@@ -12,31 +12,31 @@ void SerialInput()
     }
     
     //------------------------------------------------------------------------------------ Verify that command data has been received ---------------------------------------------------------------------
-    if(datapack[0]==0 && i==10)
+    if(datapack[0]==1 && i==10)
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==1 && (i==7 || i==25))
+    if(datapack[0]==2 && (i == 2 || i == 5 || i == 8 || i == 29 || i==7 || i==25))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==2 && (i==6 || i==8))
+    if(datapack[0]==3 && (i==7 || i==9))
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==3 && i==6)
+    if(datapack[0]==4 && i==6)
     {
       command=datapack[0];
       packsize=i;
     }
     
-    if(datapack[0]==4 && i>2)
+    if(datapack[0]==5 && i>2)
     {
       command=datapack[0];
       packsize=i;

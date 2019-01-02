@@ -2,6 +2,12 @@ void PowerDown()
 {
   analogWrite(pwmapin,0);                                                                       // power down M1
   analogWrite(pwmbpin,0);                                                                       // power down M2
+  mspeed[0] = 0;
+  mspeed[1] = 0;
+  mspeed[2] = 0;
+  mspeed[3] = 0;
+  apwm = 0;
+  bpwm = 0;
   eflag=eflag|B00100000;                                                                        // error flag bit 6 indicates power shut down due to low battery voltage
   
   Wire.beginTransmission(address+1);                                                             // take control of I²C bus and address MCU2
