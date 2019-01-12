@@ -36,7 +36,7 @@ void Commands()
     addroffset=datapack[8];
     master=datapack[9];
     EEPROMsave();                                                            // update EEPROM
-    TXconfig();
+    // TXconfig();
     command=DCC_NONE;
     return;
   }
@@ -77,7 +77,7 @@ void Commands()
         encres[i]=datapack[3]*256+datapack[4];
         reserve[i]=datapack[5];
         stalltm[i]=datapack[6];
-        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX4))
+        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX1))
             encflags[i]=datapack[7];
       }
     }
@@ -93,7 +93,7 @@ void Commands()
                                                                              // encres = encoder resolution in 100ths of a segment per revolution
     }
     EEPROMsave();                                                            // update EEPROM
-    TXconfig();
+    //  TXconfig();
     command=DCC_NONE;
     return;
   }
