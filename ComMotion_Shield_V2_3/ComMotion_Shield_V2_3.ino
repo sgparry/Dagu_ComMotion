@@ -188,7 +188,9 @@ void loop()
     }
     if(powerdown>249) PowerDown();                                            // if battery voltage consistantly low for 250 samples shutdown all motors
   }
-  if(powerdown>249) return;                                                   // power must be cycled or reset button pressed to resume
+  if (powerdown>249 && !(command==DCC_UNKNOWN || command==DCC_BASIC_CONFIG ||
+    command==DCC_SERIAL_CONFIG || command==DCC_STATUS_REQUEST) )              // allow configuration and status commands, else how do you find reason for shutdown / adjust btty level.
+    return;                                                                   // power must be cycled or reset button pressed to resume
   
   //---------------------------------------------------------------------------- Shield Functions ---------------------------------------------------------------------------------------
   
