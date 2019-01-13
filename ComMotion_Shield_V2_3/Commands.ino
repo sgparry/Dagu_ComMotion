@@ -60,7 +60,7 @@ void Commands()
         encres[i]=datapack[3]*256+datapack[4];
         reserve[i]=datapack[5];
         stalltm[i]=datapack[6];
-        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX4))
+        if(packsize==sizeof(Dagu_ComMotionEncoderConfigPacketX1))
             encflags[i]=datapack[7];
       }
     }
