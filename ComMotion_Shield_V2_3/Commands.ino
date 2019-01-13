@@ -93,7 +93,7 @@ void Commands()
                                                                              // encres = encoder resolution in 100ths of a segment per revolution
     }
     EEPROMsave();                                                            // update EEPROM
-    //  TXconfig();
+    // TXconfig();
     command=DCC_NONE;
     return;
   }

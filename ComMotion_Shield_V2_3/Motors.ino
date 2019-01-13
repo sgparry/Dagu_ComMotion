@@ -14,11 +14,15 @@ void Motors()
         
     if(inc > 0)
     {
-      if(mspeed[motora]>0 || (encflags[motora] & 0x1))                        // update encoder A state change counter
+      if(mspeed[motora]>0 || lastmspeed[motora] >= 0 || (encflags[motora] & 0x1)) // update encoder A state change counter
         acount += inc;
-      else if (mspeed[motora]<0)
+      else if (mspeed[motora]<0 || lastmspeed[motora] < 0)
         acount -= inc;
     }
+
+    if(mspeed[motora] != 0)                                                   // record the speed for next time - allows us to record braking.
+      lastmspeed[motora] = mspeed[motora];
+
     actual=maxpulse[motora]/abs(mspeed[motora]);                              // calculate desired time in uS between encoder pulses
     if(actual>apulse && apwm>0) apwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<apulse && apwm<255) apwm++;                                     // if motor is running too slow then increase PWM
@@ -39,9 +43,13 @@ void Motors()
     {
       if(mspeed[motorb]>0 || (encflags[motorb] & 0x1))                        // update encoder B state change counter
         bcount += inc;
-      else if (mspeed[motorb]<0)
+      else if (mspeed[motorb]<0 || lastmspeed[motorb] < 0)
         bcount -= inc;
     }
+
+    if(mspeed[motorb] != 0) 
+      lastmspeed[motorb] = mspeed[motorb];
+
     actual=maxpulse[motorb]/abs(mspeed[motorb]);                              // calculate desired time in uS between encoder pulses
     if(actual>bpulse && bpwm>0) bpwm--;                                       // if motor is running too fast then decrease PWM
     if(actual<bpulse && bpwm<255) bpwm++;                                     // if motor is running too slow then increase PWM
