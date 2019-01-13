@@ -47,6 +47,7 @@ int velocity=0;                                                               //
 int angle=-360;                                                               // requested angle of travel
 int rotation=0;                                                               // requested rotation
 int mspeed[4];                                                                // requested speed of individual motors
+int lastmspeed[4] = {0,0,0,0};                                                // last requested NONZERO speed.
 
 float radconvert=PI/180;                                                      // used to convert radians into degrees (precalculated to improve speed)
 
