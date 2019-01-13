@@ -33,7 +33,7 @@ void Commands()
     addroffset=datapack[8];
     master=datapack[9];
     EEPROMsave();                                                            // update EEPROM
-    TXconfig();
+    // TXconfig();
     command=DCC_NONE;
     return;
   }
@@ -70,7 +70,7 @@ void Commands()
       maxpulse[i]=maxpulse[i]*(100L-long(reserve[i]))/100L;
     }
     EEPROMsave();                                                            // update EEPROM
-    TXconfig();
+    // TXconfig();
     command=DCC_NONE;
     return;
   }
