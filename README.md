@@ -20,6 +20,8 @@ moved on from Dagu before being able to complete those fixes himself.
 3. To host a branch of the source including some new features.
 
 ## Using this source
+Note: as a new requirement, in order to compile recent versions of this code you also need to pull and install the [Dagu_ComMotionCommon](https://github.com/sgparry/Dagu_ComMotionCommon) repo. This contains the common definitions between the firmware and the host, which are also used in an as yet incomplete host side library.
+
 In order to correctly use this source, you will need to consult page 7 of the
 user manual and the programming tutorial, both are linked from this page:
 http://www.dagurobot.com/goods.php?id=174 At time of writing,
